@@ -1307,6 +1307,12 @@ class Event(StripeModel):
     stripe_class = stripe.Event
     stripe_dashboard_item_name = "events"
 
+    account = models.ForeignKey(
+        "Account",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
     api_version = models.CharField(
         max_length=15,
         blank=True,
@@ -1316,6 +1322,12 @@ class Event(StripeModel):
     data = JSONField(
         help_text="data received at webhook. data should be considered to be garbage "
         "until validity check is run and valid flag is set"
+    )
+    pending_webhooks = models.PositiveIntegerField(
+        help_text = (
+            "Number of webhooks that have yet to be successfully delivered "
+            "(i.e., to return a 20x response) to the URLs you’ve specified."
+        ),
     )
     request_id = models.CharField(
         max_length=50,
@@ -1355,11 +1367,15 @@ class Event(StripeModel):
         if qs.exists():
             return qs.first()
 
+        # If this event is from a connect endpoint, it should have an account
+        # id specified that we need to pass along when doing CRUD operations
+        # on all stripe objects represented in the event.
+        stripe_account = data.get("account")
         # Rollback any DB operations in the case of failure so
         # we will retry creating and processing the event the
         # next time the webhook fires.
         with transaction.atomic():
-            ret = cls._create_from_stripe_object(data)
+            ret = cls._create_from_stripe_object(data, stripe_account=stripe_account)
             ret.invoke_webhook_handlers()
             return ret
 
