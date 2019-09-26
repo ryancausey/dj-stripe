@@ -374,8 +374,8 @@ class Invoice(StripeModel):
         )
 
     @classmethod
-    def _manipulate_stripe_object_hook(cls, data):
-        data = super()._manipulate_stripe_object_hook(data)
+    def _manipulate_stripe_object_hook(cls, data, stripe_account=None):
+        data = super()._manipulate_stripe_object_hook(data, stripe_account=stripe_account)
         # Invoice.closed and .forgiven deprecated in API 2018-11-08 -
         # see https://stripe.com/docs/upgrades#2018-11-08
 
@@ -697,7 +697,8 @@ class InvoiceItem(StripeModel):
     # XXX: subscription_item
 
     @classmethod
-    def _manipulate_stripe_object_hook(cls, data):
+    def _manipulate_stripe_object_hook(cls, data, stripe_account=None):
+        data = super()._manipulate_stripe_object_hook(data, stripe_account=stripe_account)
         data["period_start"] = data["period"]["start"]
         data["period_end"] = data["period"]["end"]
 

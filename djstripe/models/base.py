@@ -177,13 +177,26 @@ class StripeModel(models.Model):
         return ["id={id}".format(id=self.id)]
 
     @classmethod
-    def _manipulate_stripe_object_hook(cls, data):
+    def _manipulate_stripe_object_hook(cls, data, stripe_account=None):
         """
         Gets called by this object's stripe object conversion method just before
         conversion.
         Use this to populate custom fields in a StripeModel from stripe data.
         """
-        return data
+        account_key = "account"
+        object_key = "object"
+        if not stripe_account:
+            return data
+
+        if data.get(object_key) and not data[object_key].get(account_key):
+            data[object_key][account_key] = stripe_account
+            return data
+
+        if not data.get(account_key):
+            data[account_key] = stripe_account
+            return data
+
+        raise ValueError(f"Unable to manipulate data to add stripe account {stripe_account}.")
 
     @classmethod
     def _stripe_object_to_record(
@@ -210,7 +223,7 @@ class StripeModel(models.Model):
         :return: All the members from the input, translated, mutated, etc
         :rtype: dict
         """
-        manipulated_data = cls._manipulate_stripe_object_hook(data)
+        manipulated_data = cls._manipulate_stripe_object_hook(data, stripe_account=stripe_account)
 
         if "object" not in data:
             raise ValueError("Stripe data has no `object` value. Aborting. %r" % (data))

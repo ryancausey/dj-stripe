@@ -459,7 +459,8 @@ class Source(StripeModel):
     stripe_dashboard_item_name = "sources"
 
     @classmethod
-    def _manipulate_stripe_object_hook(cls, data):
+    def _manipulate_stripe_object_hook(cls, data, stripe_account=None):
+        data = super()._manipulate_stripe_object_hook(data, stripe_account=stripe_account)
         # The source_data dict is an alias of all the source types
         data["source_data"] = data[data["type"]]
         return data

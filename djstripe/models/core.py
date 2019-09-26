@@ -523,7 +523,8 @@ class Customer(StripeModel):
             return self.id
 
     @classmethod
-    def _manipulate_stripe_object_hook(cls, data):
+    def _manipulate_stripe_object_hook(cls, data, stripe_account=None):
+        data = super()._manipulate_stripe_object_hook(data, stripe_account=stripe_account)
         discount = data.get("discount")
         if discount:
             data["coupon_start"] = discount["start"]

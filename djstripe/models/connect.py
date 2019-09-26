@@ -268,8 +268,8 @@ class Account(StripeModel):
         return self.branding_icon
 
     @classmethod  # noqa: C901
-    def _manipulate_stripe_object_hook(cls, data):
-        data = super()._manipulate_stripe_object_hook(data)
+    def _manipulate_stripe_object_hook(cls, data, stripe_account=None):
+        data = super()._manipulate_stripe_object_hook(data, stripe_account=stripe_account)
 
         def empty_string_to_none(v):
             """
