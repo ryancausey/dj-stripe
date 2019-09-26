@@ -9,9 +9,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from .models import WebhookEventTrigger
+from .models.webhooks import EndpointType
 
 logger = logging.getLogger(__name__)
-
 
 @method_decorator(csrf_exempt, name="dispatch")
 class ProcessWebhookView(View):
@@ -25,6 +25,7 @@ class ProcessWebhookView(View):
 
     If an exception happens during processing, returns HTTP 500.
     """
+    endpoint_type = EndpointType.ACCOUNT
 
     def post(self, request):
         if "HTTP_STRIPE_SIGNATURE" not in request.META:
@@ -32,7 +33,7 @@ class ProcessWebhookView(View):
             # no signature in the headers so we avoid overfilling the db.
             return HttpResponseBadRequest()
 
-        trigger = WebhookEventTrigger.from_request(request)
+        trigger = WebhookEventTrigger.from_request(request, endpoint_type=self.endpoint_type)
 
         if trigger.is_test_event:
             # Since we don't do signature verification, we have to skip trigger.valid

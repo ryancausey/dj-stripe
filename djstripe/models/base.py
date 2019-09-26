@@ -188,7 +188,7 @@ class StripeModel(models.Model):
         if not stripe_account:
             return data
 
-        if data.get(object_key) and not data[object_key].get(account_key):
+        if data.get(object_key) and hasattr(data[object_key], "get") and not data[object_key].get(account_key):
             data[object_key][account_key] = stripe_account
             return data
 
@@ -196,7 +196,7 @@ class StripeModel(models.Model):
             data[account_key] = stripe_account
             return data
 
-        raise ValueError(f"Unable to manipulate data to add stripe account {stripe_account}.")
+        return data
 
     @classmethod
     def _stripe_object_to_record(
