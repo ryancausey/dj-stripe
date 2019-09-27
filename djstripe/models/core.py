@@ -1363,15 +1363,18 @@ class Event(StripeModel):
             self.request_id = request_obj or ""
 
     @classmethod
-    def process(cls, data):
+    def process(cls, data, stripe_account=None):
         qs = cls.objects.filter(id=data["id"])
         if qs.exists():
             return qs.first()
 
         # If this event is from a connect endpoint, it should have an account
         # id specified that we need to pass along when doing CRUD operations
-        # on all stripe objects represented in the event.
-        stripe_account = data.get("account")
+        # on all stripe objects represented in the event. However, prefer the
+        # one that is passed in. In some cases, like manually retrieving events,
+        # there is no stripe_account field in the body.
+        if not stripe_account:
+            stripe_account = data.get("account")
         # Rollback any DB operations in the case of failure so
         # we will retry creating and processing the event the
         # next time the webhook fires.
